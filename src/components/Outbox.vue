@@ -26,8 +26,10 @@
 		:show-details="isMessageShown"
 		@update:showDetails="hideMessage">
 		<OutboxMessageContent />
-		<!-- List -->
-		<template #list>
+		<div slot="list" class="second-column">
+			<NewMessageButtonHeader />
+
+			<!-- List -->
 			<AppContentList>
 				<Error
 					v-if="error"
@@ -44,7 +46,7 @@
 					:key="message.id"
 					:message="message" />
 			</AppContentList>
-		</template>
+		</div>
 	</AppContent>
 </template>
 
@@ -56,6 +58,7 @@ import Error from './Error'
 import EmptyMailbox from './EmptyMailbox'
 import OutboxMessageContent from './OutboxMessageContent'
 import OutboxMessageListItem from './OutboxMessageListItem'
+import NewMessageButtonHeader from './NewMessageButtonHeader'
 import logger from '../logger'
 
 export default {
@@ -68,12 +71,14 @@ export default {
 		EmptyMailbox,
 		OutboxMessageListItem,
 		OutboxMessageContent,
+		NewMessageButtonHeader,
 	},
 	data() {
 		return {
 			error: false,
 			loading: false,
 			refreshInterval: undefined,
+			refreshing: false,
 		}
 	},
 	computed: {
@@ -127,4 +132,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.second-column {
+	display: flex;
+	flex: 1px 0 0;
+	flex-direction: column;
+	height: calc(100vh - var(--header-height));
+
+}
+::v-deep .button-vue--vue-secondary {
+	box-shadow: none;
+}
 </style>

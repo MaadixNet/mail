@@ -282,6 +282,7 @@ class MessageMapper extends QBMapper {
 			$qb1->setValue('flag_notjunk', $qb1->createParameter('flag_notjunk'));
 			$qb1->setValue('flag_important', $qb1->createParameter('flag_important'));
 			$qb1->setValue('flag_mdnsent', $qb1->createParameter('flag_mdnsent'));
+//			$qb1->setValue('imip_message', $qb1->createParameter('imip_message'));
 			$qb2 = $this->db->getQueryBuilder();
 
 			$qb2->insert('mail_recipients')
@@ -312,6 +313,7 @@ class MessageMapper extends QBMapper {
 				$qb1->setParameter('flag_notjunk', $message->getFlagNotjunk(), IQueryBuilder::PARAM_BOOL);
 				$qb1->setParameter('flag_important', $message->getFlagImportant(), IQueryBuilder::PARAM_BOOL);
 				$qb1->setParameter('flag_mdnsent', $message->getFlagMdnsent(), IQueryBuilder::PARAM_BOOL);
+//				$qb1->setParameter('imip_message', $message->isImipMessage(), IQueryBuilder::PARAM_BOOL);
 
 				$qb1->execute();
 
@@ -482,6 +484,7 @@ class MessageMapper extends QBMapper {
 				->set('preview_text', $query->createParameter('preview_text'))
 				->set('structure_analyzed', $query->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
 				->set('updated_at', $query->createNamedParameter($this->timeFactory->getTime(), IQueryBuilder::PARAM_INT))
+				->set('imip_message', $query->createParameter('imip_message'))
 				->where($query->expr()->andX(
 					$query->expr()->eq('uid', $query->createParameter('uid')),
 					$query->expr()->eq('mailbox_id', $query->createParameter('mailbox_id'))
@@ -501,6 +504,7 @@ class MessageMapper extends QBMapper {
 					$message->getPreviewText() === null ? null : mb_strcut($message->getPreviewText(), 0, 255),
 					$message->getPreviewText() === null ? IQueryBuilder::PARAM_NULL : IQueryBuilder::PARAM_STR
 				);
+				$query->setParameter('imip_message', $message->isImipMessage(), IQueryBuilder::PARAM_BOOL);
 
 				$query->execute();
 			}
@@ -1220,5 +1224,25 @@ class MessageMapper extends QBMapper {
 				$qb->expr()->like('in_reply_to', $qb->createNamedParameter("<>", IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR)
 			);
 		return $update->execute();
+	}
+
+	/**
+	 * Get all iMIP messages from the last two weeks
+	 * that haven't been processed yet
+	 * @return Message[]
+	 */
+	public function findIMipMessages(): array {
+		$qb = $this->db->getQueryBuilder();
+
+		$select = $qb->select('*')
+			->from($this->getTableName())
+			->andWhere(
+				$qb->expr()->eq('imip_message', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL), IQueryBuilder::PARAM_BOOL),
+				$qb->expr()->eq('imip_processed', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL), IQueryBuilder::PARAM_BOOL),
+				$qb->expr()->eq('imip_error', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL), IQueryBuilder::PARAM_BOOL),
+				$qb->expr()->gt('sent_at', ($this->timeFactory->getTime() - 60 * 60 * 24 * 14), $qb->createNamedParameter(false, IQueryBuilder::PARAM_INT)),
+			);
+
+		return $this->findEntities($select);
 	}
 }

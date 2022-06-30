@@ -661,6 +661,10 @@ class MessageMapper {
 										 array $uids): array {
 		$structureQuery = new Horde_Imap_Client_Fetch_Query();
 		$structureQuery->structure();
+		$structureQuery->headerText([
+			'cache' => true,
+			'peek' => true,
+		]);
 
 		$structures = $client->fetch($mailbox, $structureQuery, [
 			'ids' => new Horde_Imap_Client_Ids($uids),
@@ -669,12 +673,19 @@ class MessageMapper {
 		return array_map(function (Horde_Imap_Client_Data_Fetch $fetchData) use ($mailbox, $client) {
 			$hasAttachments = false;
 			$text = '';
+			$isImipMessage = false;
 
 			$structure = $fetchData->getStructure();
-			foreach ($structure as $part) {
-				if ($part instanceof Horde_Mime_Part && $part->isAttachment()) {
+			foreach ($structure->getParts() as $part) {
+				if ($part->isAttachment()) {
 					$hasAttachments = true;
-					break;
+				}
+				$bodyParts = $part->getParts();
+				foreach ($bodyParts as $bodyPart) {
+					$contentParameters = $bodyPart->getAllContentTypeParameters();
+					if ($bodyPart->getType() === 'text/calendar' && isset($contentParameters['method'])) {
+						$isImipMessage = true;
+					}
 				}
 			}
 
@@ -684,7 +695,7 @@ class MessageMapper {
 
 			$partsQuery = new Horde_Imap_Client_Fetch_Query();
 			if ($textBodyId === null) {
-				return new MessageStructureData($hasAttachments, $text);
+				return new MessageStructureData($hasAttachments, $text, $isImipMessage);
 			}
 			$partsQuery->bodyPart($textBodyId, [
 				'decode' => true,
@@ -710,7 +721,7 @@ class MessageMapper {
 				$text = $structure->getContents();
 			}
 
-			return new MessageStructureData($hasAttachments, $text);
+			return new MessageStructureData($hasAttachments, $text, $isImipMessage);
 		}, iterator_to_array($structures->getIterator()));
 	}
 }

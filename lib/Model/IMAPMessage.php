@@ -774,6 +774,9 @@ class IMAPMessage implements IMessage, JsonSerializable {
 		$msg->setFlagAttachments(false);
 		$msg->setFlagMdnsent(in_array(Horde_Imap_Client::FLAG_MDNSENT, $flags, true));
 
+		// @todo needs https://github.com/nextcloud/mail/pull/6782
+		// $msg->setImipMessage(!empty($this->scheduling));
+
 		$allowed = [
 			Horde_Imap_Client::FLAG_ANSWERED,
 			Horde_Imap_Client::FLAG_FLAGGED,

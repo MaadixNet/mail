@@ -27,7 +27,7 @@ export default {
 		},
 		value: {
 			type: Number,
-			required: false,
+			required: true,
 		},
 	},
 	data() {

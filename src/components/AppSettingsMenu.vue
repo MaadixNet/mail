@@ -267,9 +267,16 @@ p.app-settings {
 		line-height: normal;
 		min-height: 44px;
 		font-size: unset;
+		opacity: .7;
 	}
 }
 .material-design-icon.lock-icon {
 	margin-right: 10px;
+}
+.material-design-icon {
+	opacity: .7;
+}
+::v-deep .button-vue__text {
+	opacity: .7;
 }
 </style>

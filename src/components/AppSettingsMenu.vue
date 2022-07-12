@@ -273,9 +273,6 @@ p.app-settings {
 .material-design-icon.lock-icon {
 	margin-right: 10px;
 }
-.material-design-icon {
-	opacity: .7;
-}
 ::v-deep .button-vue__text {
 	opacity: .7;
 }

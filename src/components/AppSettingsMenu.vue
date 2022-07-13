@@ -267,13 +267,15 @@ p.app-settings {
 		line-height: normal;
 		min-height: 44px;
 		font-size: unset;
-		opacity: .7;
+
+		&:focus-visible,
+		&:hover {
+			box-shadow: 0 0 0 1px var(--color-primary-element);
+		}
 	}
 }
-.material-design-icon.lock-icon {
+.material-design-icon {
 	margin-right: 10px;
-}
-::v-deep .button-vue__text {
 	opacity: .7;
 }
 </style>

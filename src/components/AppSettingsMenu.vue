@@ -275,7 +275,10 @@ p.app-settings {
 	}
 }
 .material-design-icon {
-	margin-right: 10px;
 	opacity: .7;
+	&.lock-icon {
+		margin-right: 10px;
+	}
+
 }
 </style>

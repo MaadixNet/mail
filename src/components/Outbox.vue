@@ -78,7 +78,6 @@ export default {
 			error: false,
 			loading: false,
 			refreshInterval: undefined,
-			refreshing: false,
 		}
 	},
 	computed: {

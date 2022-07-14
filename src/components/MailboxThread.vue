@@ -124,7 +124,6 @@ export default {
 	},
 	data() {
 		return {
-			refreshing: false,
 			// eslint-disable-next-line
 			importantInfo: t('mail', 'Messages will automatically be marked as important based on which messages you interacted with or marked as important. In the beginning you might have to manually change the importance to teach the system, but it will improve over time.'),
 			bus: new Vue(),

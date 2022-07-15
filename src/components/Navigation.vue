@@ -243,5 +243,6 @@ to {
 }
 ::v-deep .settings-button {
 	opacity: .7 !important;
+	font-weight: bold !important;
 }
 </style>

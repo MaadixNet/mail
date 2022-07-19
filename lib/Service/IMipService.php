@@ -98,9 +98,9 @@ class IMipService {
 			$account = $accounts[$mailbox->getAccountId()];
 			// mailbox not in collated array, maybe specal use?
 			// no processing for drafts and sent items
-			if ($mailbox->getSpecialUse() === '["sent"]' || $mailbox->getSpecialUse() === '["drafts"]') { // does this need more use cases? Also probably won't work? @todo
+			if ($mailbox->isSpecialUse("sent") || $mailbox->isSpecialUse("drafts")) { // does this need more use cases? Also probably won't work? @todo
 				$message->setImipProcessed(true); // Silently drop from passing to DAV and mark as processed, so we won't run into this message again.
-				$processedMessages[$account->getId()] = $message;
+				$processedMessages[$account->getId()][] = $message;
 				continue;
 			}
 
@@ -109,14 +109,14 @@ class IMipService {
 				$imapMessage = $this->mailManager->getImapMessage($account, $mailbox, $message->getUid());
 			} catch (ServiceException $e) {
 				$message->setImipError(true);
-				$processedMessages[$account->getId()] = $message;
+				$processedMessages[$account->getId()][] = $message;
 				continue;
 			}
 
 			if (empty($imapMessage->scheduling)) {
 				// No scheduling info, maybe the DB is wrong
 				$message->setImipError(true);
-				$processedMessages[$account->getId()] = $message;
+				$processedMessages[$account->getId()][] = $message;
 				continue;
 			}
 
@@ -131,12 +131,15 @@ class IMipService {
 			}
 			$message->setImipProcessed($processed);
 			$message->setImipError(!$processed);
-			$processedMessages[$account->getId()] = $message;
+			$processedMessages[$account->getId()][] = $message;
 		}
 
-		foreach ($processedMessages as $accountId => $messages) {
+		foreach ($accountIds as $accountId) {
+			if (!isset($processedMessages[$accountId])) {
+				continue;
+			}
 			try {
-				$this->messageMapper->updateBulk($accounts[$accountId], false, $messages);
+				$this->messageMapper->updateBulk($accounts[$accountId], false, $processedMessages[$accountId]);
 			} catch (\Throwable $e) {
 				$this->logger->error('Could not update iMip messages for account ' . $accountId, ['exception' => $e]);
 			}

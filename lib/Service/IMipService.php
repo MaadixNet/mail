@@ -60,7 +60,7 @@ class IMipService {
 		$this->logger = $logger;
 	}
 
-	public function process() {
+	public function process(): void {
 		$messages = $this->messageMapper->findIMipMessages();
 
 		// Collect all mailboxes in memory
@@ -106,28 +106,28 @@ class IMipService {
 
 
 			try {
-				$imapMessage = $this->mailManager->getImapMessage($account, $mailbox, $message->getUid());
+				$imapMessage = $this->mailManager->getImapMessageForScheduleProcessing($account, $mailbox, $message->getUid());
 			} catch (ServiceException $e) {
 				$message->setImipError(true);
 				$processedMessages[$account->getId()][] = $message;
 				continue;
 			}
 
-			if (empty($imapMessage->scheduling)) {
+			if (empty($imapMessage->scheduling[0])) {
 				// No scheduling info, maybe the DB is wrong
 				$message->setImipError(true);
 				$processedMessages[$account->getId()][] = $message;
 				continue;
 			}
 
-			$principalUri = '';
+			$principalUri = 'principals/users/' . $account->getUserId();
 			$sender = $imapMessage->getFrom()->first()->getEmail();
 			$recipient = $account->getEmail();
 			$processed = false;
-			if ($imapMessage->scheduling['method'] === 'REPLY') {
-				$processed = $this->calendarManager->handleIMipReply($principalUri, $sender, $recipient, $imapMessage->scheduling['content']);
+			if ($imapMessage->scheduling[0]['method'] === 'REPLY') {
+				$processed = $this->calendarManager->handleIMipReply($principalUri, $sender, $recipient, $imapMessage->scheduling[0]['contents']);
 			} elseif ($imapMessage->scheduling['method'] === 'CANCEL') {
-				$processed = $this->calendarManager->handleIMipCancel($principalUri, $sender, $recipient, $imapMessage->scheduling['content']);
+				$processed = $this->calendarManager->handleIMipCancel($principalUri, $sender, $recipient, $imapMessage->scheduling[0]['contents']);
 			}
 			$message->setImipProcessed($processed);
 			$message->setImipError(!$processed);
@@ -139,7 +139,7 @@ class IMipService {
 				continue;
 			}
 			try {
-				$this->messageMapper->updateBulk($accounts[$accountId], false, $processedMessages[$accountId]);
+				$this->messageMapper->updateBulk($accounts[$accountId], false, ...$processedMessages[$accountId]);
 			} catch (\Throwable $e) {
 				$this->logger->error('Could not update iMip messages for account ' . $accountId, ['exception' => $e]);
 			}

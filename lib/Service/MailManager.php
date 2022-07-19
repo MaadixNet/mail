@@ -194,6 +194,29 @@ class MailManager implements IMailManager {
 		}
 	}
 
+	public function getImapMessageForScheduleProcessing(Account $account,
+		Mailbox $mailbox,
+		int $uid,
+		bool $loadBody = false): IMAPMessage {
+		$client = $this->imapClientFactory->getClient($account);
+		try {
+			return $this->imapMessageMapper->find(
+				$client,
+				$mailbox->getName(),
+				$uid,
+				true
+			);
+		} catch (Horde_Imap_Client_Exception|DoesNotExistException $e) {
+			throw new ServiceException(
+				'Could not load message',
+				(int)$e->getCode(),
+				$e
+			);
+		} finally {
+			$client->logout();
+		}
+	}
+
 	public function getThread(Account $account, string $threadRootId): array {
 		return $this->dbMessageMapper->findThread($account, $threadRootId);
 	}

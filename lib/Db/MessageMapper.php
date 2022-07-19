@@ -1232,15 +1232,16 @@ class MessageMapper extends QBMapper {
 	 * @return Message[]
 	 */
 	public function findIMipMessages(): array {
+		$time = $this->timeFactory->getTime() - 60 * 60 * 24 * 14;
 		$qb = $this->db->getQueryBuilder();
 
 		$select = $qb->select('*')
 			->from($this->getTableName())
-			->andWhere(
+			->where(
 				$qb->expr()->eq('imip_message', $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL), IQueryBuilder::PARAM_BOOL),
 				$qb->expr()->eq('imip_processed', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL), IQueryBuilder::PARAM_BOOL),
 				$qb->expr()->eq('imip_error', $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL), IQueryBuilder::PARAM_BOOL),
-				$qb->expr()->gt('sent_at', ($this->timeFactory->getTime() - 60 * 60 * 24 * 14), $qb->createNamedParameter(false, IQueryBuilder::PARAM_INT)),
+				$qb->expr()->gt('sent_at', $qb->createNamedParameter($time, IQueryBuilder::PARAM_INT)),
 			);
 
 		return $this->findEntities($select);
